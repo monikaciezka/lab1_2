@@ -25,33 +25,12 @@ public class BookKeeper {
         Invoice invoice = Invoice.getNewInvoice(invoiceRequest.getClient());
 
         for (RequestItem item : invoiceRequest.getItems()) {
-            Money net = item.getTotalCost();
-            BigDecimal ratio = null;
-            String desc = null;
 
-            switch (item.getProductData().getType()) {
-                case DRUG:
-                    ratio = BigDecimal.valueOf(0.05);
-                    desc = "5% (D)";
-                    break;
-                case FOOD:
-                    ratio = BigDecimal.valueOf(0.07);
-                    desc = "7% (F)";
-                    break;
-                case STANDARD:
-                    ratio = BigDecimal.valueOf(0.23);
-                    desc = "23%";
-                    break;
+           TaxCalculator taxCalculator = new TaxCalculator();
+           taxCalculator.findTaxValue(item);
+            Tax tax = new Tax(taxCalculator.getTaxValue(), taxCalculator.getDesc());
 
-                default:
-                    throw new IllegalArgumentException(item.getProductData().getType() + " not handled");
-            }
-
-            Money taxValue = net.multiplyBy(ratio);
-
-            Tax tax = new Tax(taxValue, desc);
-
-            InvoiceLine invoiceLine = new InvoiceLine(item.getProductData(), item.getQuantity(), net, tax);
+            InvoiceLine invoiceLine = new InvoiceLine(item.getProductData(), item.getQuantity(), taxCalculator.getNet(), tax);
             invoice.addItem(invoiceLine);
         }
 
